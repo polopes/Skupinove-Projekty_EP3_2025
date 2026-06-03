@@ -38,20 +38,24 @@ pygame.init()
 player_name = input("Zadej jméno hráče: ")
 
 # HERNÍ NASTAVENÍ
-WIDTH, HEIGHT = 600, 600
+WIDTH, HEIGHT = 600, 720
 ROWS, COLS = 4, 4
 TILE_SIZE = WIDTH // COLS
+BOARD_HEIGHT = TILE_SIZE * ROWS
 
 # BARVY
 WHITE = (255, 255, 255)
 GRAY = (200, 200, 200)
 BLUE = (100, 149, 237)
 GREEN = (0, 200, 0)
+DARK_GRAY = (35, 35, 35)
+INFO_BG = (50, 50, 70)
 
 win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Memory Puzzle Game")
 
 font = pygame.font.SysFont("arial", 36)
+small_font = pygame.font.SysFont("arial", 24)
 
 # NAČÍTÁNÍ OBRÁZKŮ
 def load_button(relative_path, size):
@@ -123,26 +127,85 @@ revealed = [[False for _ in range(COLS)] for _ in range(ROWS)]
 first = None
 matches = 0
 moves = 0
+player1_score = 0
+player2_score = 0
 
+current_player = 1
 # Funkce pro vykreslení herní plochy
 # Vykreslí herní plochu
 def draw_board():
     win.fill(GRAY)
+
     for row in range(ROWS):
         for col in range(COLS):
-            rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            rect = pygame.Rect(
+                col * TILE_SIZE,
+                row * TILE_SIZE,
+                TILE_SIZE,
+                TILE_SIZE
+            )
+
             if revealed[row][col]:
                 pygame.draw.rect(win, GREEN, rect)
-                text = font.render(str(tiles[row][col]), True, WHITE)
+
+                text = font.render(
+                    str(tiles[row][col]),
+                    True,
+                    WHITE
+                )
+
                 win.blit(
                     text,
-                    (col * TILE_SIZE + TILE_SIZE // 2 - 10,
-                     row * TILE_SIZE + TILE_SIZE // 2 - 20)
+                    (
+                        col * TILE_SIZE + TILE_SIZE // 2 - 10,
+                        row * TILE_SIZE + TILE_SIZE // 2 - 20
+                    )
                 )
             else:
                 pygame.draw.rect(win, BLUE, rect)
 
             pygame.draw.rect(win, WHITE, rect, 2)
+
+    info_panel = pygame.Rect(0, BOARD_HEIGHT, WIDTH, HEIGHT - BOARD_HEIGHT)
+    pygame.draw.rect(win, INFO_BG, info_panel)
+    pygame.draw.line(win, WHITE, (0, BOARD_HEIGHT), (WIDTH, BOARD_HEIGHT), 3)
+
+    title_text = font.render("Stav hry", True, WHITE)
+    win.blit(title_text, (20, BOARD_HEIGHT + 8))
+
+    player_text = small_font.render(
+        f"Aktuální hráč: {current_player}",
+        True,
+        WHITE
+    )
+    win.blit(player_text, (20, BOARD_HEIGHT + 48))
+
+    score_title = small_font.render(
+        "Skóre:",
+        True,
+        WHITE
+    )
+    win.blit(score_title, (WIDTH - score_title.get_width() - 20, BOARD_HEIGHT + 18))
+
+    score2_text = small_font.render(
+        f"Hráč 2 - {player2_score}",
+        True,
+        WHITE
+    )
+    score1_text = small_font.render(
+        f"Hráč 1 - {player1_score}",
+        True,
+        WHITE
+    )
+    win.blit(score2_text, (WIDTH - score2_text.get_width() - 20, BOARD_HEIGHT + 48))
+    win.blit(score1_text, (WIDTH - score1_text.get_width() - 20, BOARD_HEIGHT + 80))
+
+    moves_text = small_font.render(
+        f"Tahy: {moves}",
+        True,
+        WHITE
+    )
+    win.blit(moves_text, (20, BOARD_HEIGHT + 110))
 
     pygame.display.update()
 
@@ -211,20 +274,39 @@ while running:
                     if tiles[row][col] != tiles[r1][c1]:
                         draw_board()
                         pygame.time.delay(800)
+
                         revealed[row][col] = False
                         revealed[r1][c1] = False
+
+                        # změna hráče
+                        if current_player == 1:
+                            current_player = 2
+                        else:
+                            current_player = 1
+
                     else:
                         matches += 1
+
+                        if current_player == 1:
+                            player1_score += 1
+                        else:
+                            player2_score += 1
                     first = None
 # Výhra - od Ondřeje Černýho
     score = max(0, 200 - moves * 5)
 
     if matches == (ROWS * COLS) // 2:
+        if player1_score > player2_score:
+            winner = "Vyhral hrac 1!"
+        elif player2_score > player1_score:
+            winner = "Vyhral hrac 2!"
+        else:
+            winner = "Remiza!"
         win.fill(GRAY)
         score_text = font.render(f"Tahy: {moves}", True, WHITE)
         win.blit(score_text, (10, 10))
         win.blit(
-            font.render("You Win!", True, WHITE),
+            font.render(winner, True, WHITE),
             (WIDTH // 2 - 80, HEIGHT // 2 - 30)
         )
         pygame.display.update()
