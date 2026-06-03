@@ -10,12 +10,26 @@ import sqlite3
 # Připojení k databázi
 conn = sqlite3.connect("memory.db")
 cursor = conn.cursor()
+cursor.execute("PRAGMA foreign_keys = ON")
 
 # Tabulka hráčů
+# Tabulka hráčů
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS themes (
-    theme_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    theme_name TEXT NOT NULL
+CREATE TABLE IF NOT EXISTS players (
+    player_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
+)
+""")
+
+# Tabulka her
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS games (
+    game_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id INTEGER,
+    score INTEGER,
+    moves INTEGER,
+
+    FOREIGN KEY(player_id) REFERENCES players(player_id)
 )
 """)
 
@@ -59,18 +73,15 @@ small_font = pygame.font.SysFont("arial", 24)
 
 # NAČÍTÁNÍ OBRÁZKŮ
 def load_button(relative_path, size):
-    base_path = os.path.dirname(__file__)
-    full_path = os.path.join(base_path, relative_path)
-
-    image = pygame.image.load(full_path).convert_alpha()
+    image = pygame.image.load(relative_path).convert_alpha()
     image = pygame.transform.smoothscale(image, size)
     return image
 
 # MENU TLAČÍTKA
 BUTTON_SIZE = (300, 120)
 
-StartImg = load_button("assets/StartButton.png", BUTTON_SIZE)
-QuitImg = load_button("assets/QuitButton.png", BUTTON_SIZE)
+StartImg = load_button("StartButton.png", BUTTON_SIZE)
+QuitImg = load_button("QuitButton.png", BUTTON_SIZE)
 
 class Button:
     def __init__(self, x, y, image):
